@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+			"name": "Windows",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "gcc-x64",
+            "includePath": [
+                "${workspaceFolder}/C++/**"
+            ]
+        }
+    ],
+    "version": 4
+}
