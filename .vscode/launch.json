@@ -19,7 +19,19 @@
             // 出力をデバッグ コンソールに表示する
             "console": "internalConsole",
             "outputCapture": "std",
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            // run.batがこの行を出力したら、下の"Flutter"構成に切り替える
+            "serverReadyAction": {
+                "action": "startDebugging",
+                "pattern": "\\[run\\.bat\\] start Flutter debugging",
+                "name": "Flutter"
+            }
+        },
+		// F5では直接選ばない。.dartを開いているときにrun.bat経由で起動される
+        {
+            "name": "Flutter",
+            "type": "dart",
+            "request": "launch"
         }
     ]
 }

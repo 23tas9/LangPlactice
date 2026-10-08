@@ -27,22 +27,9 @@ goto :end
 
 
 :dart
-rem Walk up from the file to the folder that has pubspec.yaml (the Flutter project root).
-set "dir=%~dp1"
-:find_pubspec
-if exist "%dir%pubspec.yaml" goto :run_flutter
-for %%I in ("%dir%..") do set "parent=%%~fI"
-if not "%parent:~-1%"=="\" set "parent=%parent%\"
-if /i "%parent%"=="%dir%" (
-    echo pubspec.yaml was not found above "%~1".
-    goto :end
-)
-set "dir=%parent%"
-goto :find_pubspec
-
-:run_flutter
-cd /d "%dir%"
-call flutter run -d windows
+rem launch.json (serverReadyAction) watches for this line and starts the "Flutter"
+rem debug configuration, so Flutter runs under the Dart debugger with hot reload.
+echo [run.bat] start Flutter debugging
 goto :end
 
 :end
