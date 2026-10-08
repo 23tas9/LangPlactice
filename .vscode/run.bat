@@ -7,12 +7,6 @@ rem Keep this file ASCII only: cmd reads it in the console code page.
 
 setlocal
 
-rem launch.json starts this without a console window, so reopen it in a new one.
-if "%~2"=="--window" goto :main
-start "%~nx1" /wait cmd /c call "%~f0" "%~1" --window
-exit /b
-
-:main
 if "%~1"=="" (
     echo No file was passed to run.bat.
     goto :end
@@ -24,10 +18,13 @@ if /i "%~x1"==".dart" goto :dart
 echo No run rule for "%~x1" files. Add one to .vscode\run.bat.
 goto :end
 
+
 :cpp
 g++ "%~1" -o "%~dpn1.out" -std=c++2b || goto :end
-"%~dpn1.out"
+rem Run in a new console window so that the program can read keyboard input.
+start "%~nx1" /wait cmd /c ""%~dpn1.out" & pause"
 goto :end
+
 
 :dart
 rem Walk up from the file to the folder that has pubspec.yaml (the Flutter project root).
@@ -50,4 +47,3 @@ goto :end
 
 :end
 echo.
-pause

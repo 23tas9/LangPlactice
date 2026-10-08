@@ -1,10 +1,11 @@
+// 作業ファイルをrun.batに渡す
 {
     "version": "0.2.0",
     "configurations": [
         {
-            // 開いているファイルを run.bat に渡す。拡張子ごとの実行方法は run.bat 側に書く。
-            // (type は cmd.exe を起動するためだけのもの。node は VS Code 内蔵で拡張機能が要らない)
             "name": "開いているファイルを実行",
+
+            // type: nodeでcmd.exeを使用
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "${env:ComSpec}",
@@ -15,7 +16,10 @@
                 "${file}"
             ],
             "cwd": "${fileDirname}",
-            "internalConsoleOptions": "neverOpen"
+            // 出力をデバッグ コンソールに表示する
+            "console": "internalConsole",
+            "outputCapture": "std",
+            "internalConsoleOptions": "openOnSessionStart"
         }
     ]
 }
