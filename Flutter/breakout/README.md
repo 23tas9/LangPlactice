@@ -1,4 +1,4 @@
-# wordle
+# breakout
 
 A new Flutter project.
 
