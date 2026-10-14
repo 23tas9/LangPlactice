@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flame/components.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 
 import 'package:flame/events.dart';
@@ -12,6 +11,7 @@ import 'package:breakout/objects/ball.dart';
 import 'package:breakout/objects/brick.dart';
 import 'package:breakout/objects/paddle.dart';
 import 'package:breakout/providers/game_state_notifier.dart';
+import 'package:breakout/providers/score_notifier.dart';
 
 /// ブロック崩し
 class Breakout extends FlameGame
@@ -21,9 +21,7 @@ class Breakout extends FlameGame
   Breakout({
     required this._columns,
     required this._rows,
-  }) : super(
-    camera: CameraComponent.withFixedResolution(width: GameConfig.width, height: GameConfig.height)
-  );
+  }) : super();
 
   /// 発射角度の最小の傾き
   static const double _minFireTilt = 0.17;
@@ -204,8 +202,8 @@ class Breakout extends FlameGame
     }
   }
 
-  /// リトライ
-  void retry() {
+  /// リスタート
+  void restart() {
     // ステージの削除
     _clearStage();
 
@@ -221,8 +219,11 @@ class Breakout extends FlameGame
     // ボール初期化
     _ball.reset(position: centerBottom + BallConfig.offset, angle: BallConfig.angle);
 
+    // スコアのリセット
+    ref.read(scoreProvider.notifier).reset();
+
     // 準備中に状態を切り替え
-    ref.read(gameProvider.notifier).set(.ready);
+    ref.read(gameProvider.notifier).reset();
   }
 
   // ステージの作成

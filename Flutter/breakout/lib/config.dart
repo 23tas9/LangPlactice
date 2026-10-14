@@ -2,14 +2,6 @@ import 'dart:math';
 
 import 'package:flame/extensions.dart';
 
-/// ゲームコンフィグ
-abstract final class GameConfig {
-  /// ゲームの幅
-  static const double width = 1280.0;
-  /// ゲームの高さ
-  static const double height = 720.0;
-}
-
 /// パドルコンフィグ
 abstract final class PaddleConfig {
   /// サイズ
@@ -28,4 +20,6 @@ abstract final class BallConfig {
   static const double angle = -pi / 2;
   /// 配置オフセット
   static Vector2 get offset => PaddleConfig.offset - Vector2(0.0, 30.0);
+  // 速度
+  static const double speed = 500.0;
 }

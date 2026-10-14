@@ -1,17 +1,16 @@
-import 'package:breakout/providers/score_notifier.dart';
-import 'package:breakout/widgets/stroked_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:breakout/widgets/stroked_text.dart';
 import 'package:breakout/providers/game_state_notifier.dart';
-
+import 'package:breakout/providers/score_notifier.dart';
 /// ゲームオーバー画面
 class GameOverView extends ConsumerWidget {
   /// コンストラクタ
-  const GameOverView({super.key, required this.onRetry});
+  const GameOverView({super.key, required this.onRestart});
 
-  /// リトライコールバック
-  final VoidCallback onRetry;
+  /// リスタートコールバック
+  final VoidCallback onRestart;
 
   /// 構築
   @override
@@ -23,7 +22,7 @@ class GameOverView extends ConsumerWidget {
     if (state != .gameOver) return SizedBox.shrink();
 
     // 最終スコア
-    final score = ref.watch(scoreProvider);
+    final score = ref.read(scoreProvider);
 
     return Center(
       child: Column(
@@ -40,18 +39,13 @@ class GameOverView extends ConsumerWidget {
           StrokedText(
             'RESULT: $score',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 48,
               fontWeight: FontWeight.bold,
             ),
           ),
           ElevatedButton(
-            onPressed: onRetry,
-            child: StrokedText(
-              'RETRY',
-              style: TextStyle(
-                fontSize: 24,
-              ),
-            ),
+            onPressed: onRestart,
+            child: Text('RESTART'),
           ),
         ],
       ),

@@ -31,13 +31,7 @@ class Paddle extends PositionComponent
 
     return super.onLoad();
   }
-
-  /// 更新処理
-  @override
-  void update(double dt) {
-    super.update(dt);
-  }
-
+  
   /// 描画処理
   @override
   void render(Canvas canvas) {
