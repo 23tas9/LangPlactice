@@ -8,10 +8,14 @@ import 'package:breakout/breakout.dart';
 import 'package:breakout/objects/brick.dart';
 import 'package:breakout/objects/paddle.dart';
 import 'package:breakout/providers/score_notifier.dart';
+import 'package:breakout/providers/game_state_notifier.dart';
 
 /// ボールクラス
 class Ball extends CircleComponent
   with CollisionCallbacks, HasGameReference<Breakout>, RiverpodComponentMixin {
+
+  /// ボールのスピード
+  static const double _speed = 500.0;
 
   /// コンストラクタ
   Ball({
@@ -19,9 +23,6 @@ class Ball extends CircleComponent
     required super.radius,
     required super.angle,
   }) : super(anchor: Anchor.center);
-
-  /// 動いているかどうか
-  bool isPlaying = false;
   
   /// 向きの取得
   Vector2 get _direction => Vector2(cos(angle), sin(angle));
@@ -41,7 +42,7 @@ class Ball extends CircleComponent
     super.update(dt);
 
     // 動いていなければスキップ
-    if (!isPlaying) return;
+    if (ref.watch(gameProvider) != .playing) return;
 
     // 画面外に出る前に反射
     if (position.x < radius) _reflect(Vector2(1, 0));
@@ -50,10 +51,14 @@ class Ball extends CircleComponent
     if (position.y < radius) _reflect(Vector2(0, 1));
 
     // 向いている方向に移動
-    position += _direction * Breakout.speed * dt;
+    position += _direction * _speed * dt;
 
     // 画面下部を超えたら削除
     if (game.size.y < position.y - radius) {
+      // ゲームオーバーに設定
+      ref.read(gameProvider.notifier).set(.gameOver);
+
+      // 削除
       removeFromParent();
     }
   }

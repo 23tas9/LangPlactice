@@ -9,6 +9,7 @@ import 'package:flame_riverpod/flame_riverpod.dart';
 import 'package:breakout/objects/ball.dart';
 import 'package:breakout/objects/brick.dart';
 import 'package:breakout/objects/paddle.dart';
+import 'package:breakout/providers/game_state_notifier.dart';
 
 /// ブロック崩し
 class Breakout extends FlameGame
@@ -19,9 +20,6 @@ class Breakout extends FlameGame
     required this._columns,
     required this._rows,
   });
-
-  /// ボールのスピード
-  static const double speed = 500.0;
 
   /// 発射角度の最小の傾き
   static const double _minFireTilt = 0.17;
@@ -46,6 +44,8 @@ class Breakout extends FlameGame
   late final Paddle _paddle;
   /// ボール
   late final Ball _ball;
+  /// ブロック一覧
+  final List<Brick> _bricks = [];
 
   /// ボールの発射角度
   double _fireAngle = -pi / 2;
@@ -81,10 +81,29 @@ class Breakout extends FlameGame
         // ブロック
         final brick = Brick(position: pos, size: _brickSize);
         add(brick);
+
+        _bricks.add(brick);
       }
     }
 
     return super.onLoad();
+  }
+
+  /// 更新処理
+  @override
+  void update(double dt) {
+    super.update(dt);
+    
+    // 現在の状態
+    final state = ref.watch(gameProvider);
+
+    // プレイ中以外はスキップ
+    if (state != .playing) return;
+
+    /// すべてのブロックがなくなればクリア
+    if (_bricks.every((brick) => brick.isRemoved)) {
+      ref.read(gameProvider.notifier).set(.clear);
+    }
   }
 
   /// 描画処理
@@ -93,7 +112,7 @@ class Breakout extends FlameGame
     super.render(canvas);
 
     // 開始済みか非ホールドならスキップ
-    if (_ball.isPlaying || !_isHolding) return;
+    if (ref.watch(gameProvider) != .ready || !_isHolding) return;
 
     // 開始位置
     final begin = _ball.position.toOffset();
@@ -118,11 +137,19 @@ class Breakout extends FlameGame
   void onDragUpdate(DragUpdateEvent event) {
     super.onDragUpdate(event);
 
-    // 開始済みなら自機を追従させスキップ
-    if (_ball.isPlaying) {
-      // 自機をポインタに追従
-      _trackPaddle(event.canvasEndPosition.x);
+    // 現在の状態
+    final state = ref.watch(gameProvider);
 
+    // 開始済みならスキップ
+    if (state != .ready) {
+
+      // プレイ中のみ自機を動かす
+      if (state == .playing) {
+        // 自機をポインタに追従
+        _trackPaddle(event.canvasEndPosition.x);
+      }
+
+      // スキップ
       return;
     }
     
@@ -145,19 +172,25 @@ class Breakout extends FlameGame
     _isHolding = false;
 
     // 開始済みならスキップ
-    if (_ball.isPlaying) return;
+    if (ref.watch(gameProvider) != .ready) return;
 
     // 角度の適用
     _ball.angle = _fireAngle;
 
     // ボールを発射
-    _ball.isPlaying = true;
+    ref.read(gameProvider.notifier).set(.playing);
   }
 
   /// ポインタ操作時処理
   @override
   void onPointerMove(PointerMoveEvent event) {
     super.onPointerMove(event);
+
+    // 現在の状態
+    final state = ref.watch(gameProvider);
+
+    // プレイ中でなければスキップ
+    if (state != .ready && state != .playing) return;
 
     // 自機をポインタに追従
     _trackPaddle(event.canvasPosition.x);
@@ -168,8 +201,8 @@ class Breakout extends FlameGame
     // 自機を追従させる
     _paddle.moveTo(x);
 
-    // プレイ中でなければボールを自機に追従させる
-    if (!_ball.isPlaying) {
+    // プレイ前であればボールを自機に追従させる
+    if (ref.watch(gameProvider) == .ready) {
       _ball.x = _paddle.x;
     }
   }
