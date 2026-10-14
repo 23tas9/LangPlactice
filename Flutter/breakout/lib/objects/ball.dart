@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_riverpod/flame_riverpod.dart';
@@ -21,6 +23,11 @@ class Ball extends CircleComponent
     required super.radius,
     required super.angle,
   }) : super(anchor: Anchor.center);
+  
+  /// ガイドラインペイント設定
+  final Paint _guideLinePaint = Paint()
+    ..color = Colors.red
+    ..style = PaintingStyle.stroke;
   
   /// 向きの取得
   Vector2 get _direction => Vector2(cos(angle), sin(angle));
@@ -44,7 +51,7 @@ class Ball extends CircleComponent
 
     // 画面外に出る前に反射
     if (position.x < radius) _reflect(Vector2(1, 0));
-    if (game.size.x - position.x < radius) _reflect(Vector2(-1, 0));
+    if (GameConfig.width - position.x < radius) _reflect(Vector2(-1, 0));
 
     if (position.y < radius) _reflect(Vector2(0, 1));
 
@@ -52,10 +59,26 @@ class Ball extends CircleComponent
     position += _direction * BallConfig.speed * dt;
 
     // 画面下部を超えたら削除
-    if (game.size.y < position.y - radius) {
+    if (GameConfig.height < position.y - radius) {
       // ゲームオーバーに設定
       ref.read(gameProvider.notifier).set(.gameOver);
     }
+  }
+
+  /// 描画処理
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // 照準中以外はスキップ
+    if (ref.read(gameProvider) != .aiming) return;
+
+    // ローカル座標
+    final begin = (size / 2).toOffset();
+    final end = begin + Offset(BallConfig.guideLineLength, 0);
+
+    // ガイド線描画
+    canvas.drawLine(begin, end, _guideLinePaint);
   }
   
   /// 衝突判定開始処理
@@ -76,7 +99,7 @@ class Ball extends CircleComponent
       other.removeFromParent();
       
       // ポイント加算
-      ref.read(scoreProvider.notifier).add(GameConfig.pointPerBreak);
+      ref.read(scoreProvider.notifier).add(BrickConfig.pointPerBreak);
     }
   }
 

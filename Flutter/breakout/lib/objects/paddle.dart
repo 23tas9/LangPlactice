@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 
+import 'package:breakout/config.dart';
 import 'package:breakout/breakout.dart';
 
 /// 自機
@@ -31,7 +32,7 @@ class Paddle extends PositionComponent
 
     return super.onLoad();
   }
-  
+
   /// 描画処理
   @override
   void render(Canvas canvas) {
@@ -49,6 +50,6 @@ class Paddle extends PositionComponent
   /// 移動
   void moveTo(double x) {
     // 画面サイズでクランプ
-    position.x = clampDouble(x, width / 2, game.size.x - width / 2);
+    position.x = clampDouble(x, width / 2, GameConfig.width - width / 2);
   }
 }

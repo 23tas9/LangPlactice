@@ -1,7 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart' hide PointerMoveEvent;
-
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_riverpod/flame_riverpod.dart';
@@ -21,23 +20,17 @@ class Breakout extends FlameGame
   Breakout({
     required this._columns,
     required this._rows,
-  }) : super();
+  }) : super(
+    camera: CameraComponent.withFixedResolution(
+      width: GameConfig.width,
+      height: GameConfig.height
+    ),
+  );
 
   /// ブロックの列数
   final int _columns;
   /// ブロックの行数
   final int _rows;
-
-  /// ブロックエリアのマージン
-  final Vector2 _brickAreaMargin = Vector2.all(100);
-  /// ブロックアリアのサイズ
-  late final Vector2 _brickAreaSize = Vector2(size.x - _brickAreaMargin.x, size.y / 2 - _brickAreaMargin.y);
-
-  /// ブロックのマージン
-  final Vector2 _brickMargin = Vector2.all(4);
-  /// ブロックのサイズ
-  late final Vector2 _brickSize = Vector2(_brickAreaSize.x / _columns - _brickMargin.x, _brickAreaSize.y / _rows - _brickMargin.y);
-
 
   /// 自機
   late final Paddle _paddle;
@@ -45,32 +38,20 @@ class Breakout extends FlameGame
   late final Ball _ball;
   /// ブロック一覧
   final List<Brick> _bricks = [];
-
-  /// ボールの発射角度
-  double _fireAngle = -pi / 2;
-
-  /// 発射角度ペイント設定
-  final Paint _guideLinePaint = Paint()
-    ..color = Colors.red
-    ..style = PaintingStyle.stroke;
-
-  /// ホールド中か
-  bool _isHolding = false;
   
   /// 初期処理
   @override
   Future<void> onLoad() async {
-    // 画面中央下
-    final centerBottom = Vector2(size.x / 2, size.y);
+    camera.viewfinder.anchor = Anchor.topLeft;
 
     // 自機初期化
-    _paddle = Paddle(position: centerBottom + PaddleConfig.offset, size: PaddleConfig.size, cornerRadius: PaddleConfig.cornerRadius);
+    _paddle = Paddle(position: PaddleConfig.position, size: PaddleConfig.size, cornerRadius: PaddleConfig.cornerRadius);
 
     // ボール初期化
-    _ball = Ball(position: centerBottom + BallConfig.offset, radius: BallConfig.radius, angle: BallConfig.angle);
+    _ball = Ball(position: BallConfig.position, radius: BallConfig.radius, angle: BallConfig.angle);
 
     // オブジェクトの適用
-    addAll([_paddle, _ball]);
+    world.addAll([_paddle, _ball]);
 
     // ステージの作成
     _setupStage();
@@ -98,30 +79,16 @@ class Breakout extends FlameGame
     }
   }
 
-  /// 描画処理
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-
-    // 開始済みか非ホールドならスキップ
-    if (ref.read(gameProvider) != .ready || !_isHolding) return;
-
-    // 開始位置
-    final begin = _ball.position.toOffset();
-    // 終了位置
-    final end = begin + Offset.fromDirection(_fireAngle, BallConfig.guideLineLength);
-
-    // 線分の描画
-    canvas.drawLine(begin, end, _guideLinePaint);
-  }
-
   /// ドラッグ開始処理
   @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
 
-    // ホールド中に設定
-    _isHolding = true;
+    // 準備中でないならスキップ
+    if (ref.read(gameProvider) != .ready) return;
+    
+    // 照準中に変更
+    ref.read(gameProvider.notifier).set(.aiming);
   }
 
   /// ドラッグ更新処理
@@ -131,14 +98,17 @@ class Breakout extends FlameGame
 
     // 現在の状態
     final state = ref.read(gameProvider);
+    
+    // ポインタのワールド座標
+    final pos = camera.globalToLocal(event.canvasEndPosition);
 
-    // 開始済みならスキップ
-    if (state != .ready) {
+    // 照準中でないならスキップ
+    if (state != .aiming) {
 
       // プレイ中のみ自機を動かす
       if (state == .playing) {
         // 自機をポインタに追従
-        _trackPaddle(event.canvasEndPosition.x);
+        _trackPaddle(pos.x);
       }
 
       // スキップ
@@ -146,13 +116,13 @@ class Breakout extends FlameGame
     }
     
     // 差分ベクトル
-    final diff = event.canvasEndPosition - _ball.position;
+    final diff = pos - _ball.position;
 
     // ボールより下の位置はスキップ
     if (diff.y >= 0) return;
 
     // 角度の設定
-    _fireAngle = atan2(diff.y, diff.x).clamp(-pi + BallConfig.minFireTilt, -BallConfig.minFireTilt);
+    _ball.angle = atan2(diff.y, diff.x).clamp(-pi + BallConfig.minFireTilt, -BallConfig.minFireTilt);
   }
 
   /// ドラッグ終了処理
@@ -160,14 +130,10 @@ class Breakout extends FlameGame
   void onDragEnd(DragEndEvent event) {
     super.onDragEnd(event);
 
-    // 非ホールド中に設定
-    _isHolding = false;
+    final state = ref.read(gameProvider);
 
     // 開始済みならスキップ
-    if (ref.read(gameProvider) != .ready) return;
-
-    // 角度の適用
-    _ball.angle = _fireAngle;
+    if (state != .aiming) return;
 
     // ボールを発射
     ref.read(gameProvider.notifier).set(.playing);
@@ -184,8 +150,11 @@ class Breakout extends FlameGame
     // プレイ中でなければスキップ
     if (state != .ready && state != .playing) return;
 
+    // ポインタのワールド座標
+    final pos = camera.globalToLocal(event.canvasPosition);
+
     // 自機をポインタに追従
-    _trackPaddle(event.canvasPosition.x);
+    _trackPaddle(pos.x);
   }
 
   /// 指定位置に自機を追従
@@ -207,14 +176,11 @@ class Breakout extends FlameGame
     // ステージの構築
     _setupStage();
 
-    // 画面中央下
-    final centerBottom = Vector2(size.x / 2, size.y);
-
     // 自機初期化
-    _paddle.position = centerBottom + PaddleConfig.offset;
+    _paddle.position = PaddleConfig.position;
 
     // ボール初期化
-    _ball.reset(position: centerBottom + BallConfig.offset, angle: BallConfig.angle);
+    _ball.reset(position: BallConfig.position, angle: BallConfig.angle);
 
     // スコアのリセット
     ref.read(scoreProvider.notifier).reset();
@@ -225,18 +191,21 @@ class Breakout extends FlameGame
 
   // ステージの作成
   void _setupStage() {
+    // ブロックのサイズ
+    final brickSize = BrickConfig.size(_columns, _rows);
+
     // 行と列からブロックの初期化
     for (int y = 0; y < _rows; y++) {
       for (int x = 0; x < _columns; x++) {
         // ブロックの位置
-        final pos = (_brickAreaMargin / 2) + Vector2(
-          _brickMargin.x / 2 + (_brickSize.x + _brickMargin.x) * x,
-          _brickMargin.y / 2 + (_brickSize.y + _brickMargin.y) * y
+        final pos = (BrickConfig.areaMargin / 2) + Vector2(
+          BrickConfig.margin.x / 2 + (brickSize.x + BrickConfig.margin.x) * x,
+          BrickConfig.margin.y / 2 + (brickSize.y + BrickConfig.margin.y) * y
         );
         
         // ブロック
-        final brick = Brick(position: pos, size: _brickSize);
-        add(brick);
+        final brick = Brick(position: pos, size: brickSize);
+        world.add(brick);
 
         // ブロック一覧に保持
         _bricks.add(brick);
@@ -247,7 +216,7 @@ class Breakout extends FlameGame
   /// ステージの消去
   void _clearStage() {
     // ブロックの全削除
-    removeAll(_bricks);
+    world.removeAll(_bricks);
 
     // 一覧からも削除
     _bricks.clear();

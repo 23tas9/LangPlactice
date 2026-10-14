@@ -1,11 +1,11 @@
-import 'package:breakout/widgets/game_clear_view.dart';
-import 'package:flame_riverpod/flame_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:flame_riverpod/flame_riverpod.dart';
+
 import 'package:breakout/breakout.dart';
 import 'package:breakout/widgets/score_view.dart';
-import 'package:breakout/widgets/game_over_view.dart';
+import 'package:breakout/widgets/result_view.dart';
 
 final gameWidgetKey = GlobalKey<RiverpodAwareGameWidgetState<Breakout>>();
 
@@ -32,8 +32,7 @@ class App extends StatelessWidget {
           children: [
             RiverpodAwareGameWidget(game: game, key: gameWidgetKey),
             const ScoreView(),
-            GameOverView(onRestart: game.restart),
-            GameClearView(onRestart: game.restart)
+            ResultView(onRestart: game.restart),
           ],
         ),
       ),

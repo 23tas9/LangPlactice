@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum GameState {
   /// 準備
   ready,
+  /// 照準中
+  aiming,
   /// プレイ中
   playing,
   /// ゲームオーバー
