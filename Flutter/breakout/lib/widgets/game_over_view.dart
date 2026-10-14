@@ -7,8 +7,13 @@ import 'package:breakout/providers/game_state_notifier.dart';
 
 /// ゲームオーバー画面
 class GameOverView extends ConsumerWidget {
-  const GameOverView({super.key});
+  /// コンストラクタ
+  const GameOverView({super.key, required this.onRetry});
 
+  /// リトライコールバック
+  final VoidCallback onRetry;
+
+  /// 構築
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 現在の状態
@@ -40,7 +45,7 @@ class GameOverView extends ConsumerWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: onRetry,
             child: StrokedText(
               'RETRY',
               style: TextStyle(

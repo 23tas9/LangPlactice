@@ -13,7 +13,9 @@ void main() {
 }
 
 class App extends StatelessWidget {
-  const App({super.key});
+  App({super.key});
+
+  final game = Breakout(columns: 20, rows: 6);
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +23,9 @@ class App extends StatelessWidget {
       home: Scaffold(
         body: Stack(
           children: [
-            RiverpodAwareGameWidget(game: Breakout(columns: 20, rows: 6), key: gameWidgetKey),
+            RiverpodAwareGameWidget(game: game, key: gameWidgetKey),
             const ScoreView(),
-            const GameOverView(),
+            GameOverView(onRetry: game.retry),
           ],
         ),
       ),

@@ -1,11 +1,13 @@
 import 'dart:math';
 
+import 'package:flame/components.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_riverpod/flame_riverpod.dart';
 
+import 'package:breakout/config.dart';
 import 'package:breakout/objects/ball.dart';
 import 'package:breakout/objects/brick.dart';
 import 'package:breakout/objects/paddle.dart';
@@ -19,7 +21,9 @@ class Breakout extends FlameGame
   Breakout({
     required this._columns,
     required this._rows,
-  });
+  }) : super(
+    camera: CameraComponent.withFixedResolution(width: GameConfig.width, height: GameConfig.height)
+  );
 
   /// 発射角度の最小の傾き
   static const double _minFireTilt = 0.17;
@@ -61,30 +65,20 @@ class Breakout extends FlameGame
   /// 初期処理
   @override
   Future<void> onLoad() async {
+    // 画面中央下
+    final centerBottom = Vector2(size.x / 2, size.y);
+
     // 自機初期化
-    _paddle = Paddle(position: Vector2(size.x / 2, size.y - 150), size: Vector2(250, 20), cornerRadius: 6);
-    add(_paddle);
+    _paddle = Paddle(position: centerBottom + PaddleConfig.offset, size: PaddleConfig.size, cornerRadius: PaddleConfig.cornerRadius);
 
     // ボール初期化
-    _ball = Ball(position: Vector2(size.x / 2, size.y - 180), radius: 16, angle: _fireAngle);
-    add(_ball);
+    _ball = Ball(position: centerBottom + BallConfig.offset, radius: BallConfig.radius, angle: BallConfig.angle);
 
-    // 行列によってブロックの初期化
-    for (int y = 0; y < _rows; y++) {
-      for (int x = 0; x < _columns; x++) {
-        // ブロックの位置
-        final pos = (_brickAreaMargin / 2) + Vector2(
-          _brickMargin.x / 2 + (_brickSize.x + _brickMargin.x) * x,
-          _brickMargin.y / 2 + (_brickSize.y + _brickMargin.y) * y
-        );
-        
-        // ブロック
-        final brick = Brick(position: pos, size: _brickSize);
-        add(brick);
+    // オブジェクトの適用
+    addAll([_paddle, _ball]);
 
-        _bricks.add(brick);
-      }
-    }
+    // ステージの作成
+    _setupStage();
 
     return super.onLoad();
   }
@@ -95,13 +89,16 @@ class Breakout extends FlameGame
     super.update(dt);
     
     // 現在の状態
-    final state = ref.watch(gameProvider);
+    final state = ref.read(gameProvider);
 
     // プレイ中以外はスキップ
     if (state != .playing) return;
 
-    /// すべてのブロックがなくなればクリア
-    if (_bricks.every((brick) => brick.isRemoved)) {
+    // 削除済みのブロックを一覧から削除
+    _bricks.removeWhere((brick) => brick.isRemoved);
+
+    // すべてのブロックがなくなればクリア
+    if (_bricks.isEmpty) {
       ref.read(gameProvider.notifier).set(.clear);
     }
   }
@@ -112,7 +109,7 @@ class Breakout extends FlameGame
     super.render(canvas);
 
     // 開始済みか非ホールドならスキップ
-    if (ref.watch(gameProvider) != .ready || !_isHolding) return;
+    if (ref.read(gameProvider) != .ready || !_isHolding) return;
 
     // 開始位置
     final begin = _ball.position.toOffset();
@@ -138,7 +135,7 @@ class Breakout extends FlameGame
     super.onDragUpdate(event);
 
     // 現在の状態
-    final state = ref.watch(gameProvider);
+    final state = ref.read(gameProvider);
 
     // 開始済みならスキップ
     if (state != .ready) {
@@ -172,7 +169,7 @@ class Breakout extends FlameGame
     _isHolding = false;
 
     // 開始済みならスキップ
-    if (ref.watch(gameProvider) != .ready) return;
+    if (ref.read(gameProvider) != .ready) return;
 
     // 角度の適用
     _ball.angle = _fireAngle;
@@ -187,7 +184,7 @@ class Breakout extends FlameGame
     super.onPointerMove(event);
 
     // 現在の状態
-    final state = ref.watch(gameProvider);
+    final state = ref.read(gameProvider);
 
     // プレイ中でなければスキップ
     if (state != .ready && state != .playing) return;
@@ -202,8 +199,59 @@ class Breakout extends FlameGame
     _paddle.moveTo(x);
 
     // プレイ前であればボールを自機に追従させる
-    if (ref.watch(gameProvider) == .ready) {
+    if (ref.read(gameProvider) == .ready) {
       _ball.x = _paddle.x;
     }
+  }
+
+  /// リトライ
+  void retry() {
+    // ステージの削除
+    _clearStage();
+
+    // ステージの構築
+    _setupStage();
+
+    // 画面中央下
+    final centerBottom = Vector2(size.x / 2, size.y);
+
+    // 自機初期化
+    _paddle.position = centerBottom + PaddleConfig.offset;
+
+    // ボール初期化
+    _ball.reset(position: centerBottom + BallConfig.offset, angle: BallConfig.angle);
+
+    // 準備中に状態を切り替え
+    ref.read(gameProvider.notifier).set(.ready);
+  }
+
+  // ステージの作成
+  void _setupStage() {
+    // 行と列からブロックの初期化
+    for (int y = 0; y < _rows; y++) {
+      for (int x = 0; x < _columns; x++) {
+        // ブロックの位置
+        final pos = (_brickAreaMargin / 2) + Vector2(
+          _brickMargin.x / 2 + (_brickSize.x + _brickMargin.x) * x,
+          _brickMargin.y / 2 + (_brickSize.y + _brickMargin.y) * y
+        );
+        
+        // ブロック
+        final brick = Brick(position: pos, size: _brickSize);
+        add(brick);
+
+        // ブロック一覧に保持
+        _bricks.add(brick);
+      }
+    }
+  }
+
+  /// ステージの消去
+  void _clearStage() {
+    // ブロックの全削除
+    removeAll(_bricks);
+
+    // 一覧からも削除
+    _bricks.clear();
   }
 }

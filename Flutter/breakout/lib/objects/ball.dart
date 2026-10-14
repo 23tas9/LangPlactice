@@ -57,9 +57,6 @@ class Ball extends CircleComponent
     if (game.size.y < position.y - radius) {
       // ゲームオーバーに設定
       ref.read(gameProvider.notifier).set(.gameOver);
-
-      // 削除
-      removeFromParent();
     }
   }
   
@@ -83,6 +80,12 @@ class Ball extends CircleComponent
       // ポイント加算
       ref.read(scoreProvider.notifier).add(100);
     }
+  }
+
+  /// リセット
+  void reset({required Vector2 position, required double angle}) {
+    this.position = position;
+    this.angle = angle;
   }
 
   /// 自機で反射
