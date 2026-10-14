@@ -23,14 +23,14 @@ class ResultView extends ConsumerWidget {
     final state = ref.watch(gameProvider);
 
     // タイトルテキスト
-    final titleText = switch (state) {
+    final String? titleText = switch (state) {
       .clear => 'CLEAR',
       .gameOver => 'GAMEOVER',
-      _ => ''
+      _ => null
     };
 
     // 表示するタイトルがなければ非表示
-    if (titleText.isEmpty) return SizedBox.shrink();
+    if (titleText == null) return SizedBox.shrink();
 
     return Center(
       child: Column(

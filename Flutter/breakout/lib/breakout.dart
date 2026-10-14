@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart' hide PointerMoveEvent;
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -42,7 +44,14 @@ class Breakout extends FlameGame
   /// 初期処理
   @override
   Future<void> onLoad() async {
+    // 基準点を左上に移動
     camera.viewfinder.anchor = Anchor.topLeft;
+
+    // ワールドに背景をつける
+    world.add(RectangleComponent(
+      size: Vector2(GameConfig.width, GameConfig.height),
+      paint: Paint()..color = const Color(0xFF1A1A2E),
+    ));
 
     // 自機初期化
     _paddle = Paddle(position: PaddleConfig.position, size: PaddleConfig.size, cornerRadius: PaddleConfig.cornerRadius);
