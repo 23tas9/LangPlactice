@@ -23,9 +23,6 @@ class Breakout extends FlameGame
     required this._rows,
   }) : super();
 
-  /// 発射角度の最小の傾き
-  static const double _minFireTilt = 0.17;
-
   /// ブロックの列数
   final int _columns;
   /// ブロックの行数
@@ -112,7 +109,7 @@ class Breakout extends FlameGame
     // 開始位置
     final begin = _ball.position.toOffset();
     // 終了位置
-    final end = begin + Offset.fromDirection(_fireAngle, 100.0);
+    final end = begin + Offset.fromDirection(_fireAngle, BallConfig.guideLineLength);
 
     // 線分の描画
     canvas.drawLine(begin, end, _guideLinePaint);
@@ -155,7 +152,7 @@ class Breakout extends FlameGame
     if (diff.y >= 0) return;
 
     // 角度の設定
-    _fireAngle = atan2(diff.y, diff.x).clamp(-pi + _minFireTilt, -_minFireTilt);
+    _fireAngle = atan2(diff.y, diff.x).clamp(-pi + BallConfig.minFireTilt, -BallConfig.minFireTilt);
   }
 
   /// ドラッグ終了処理

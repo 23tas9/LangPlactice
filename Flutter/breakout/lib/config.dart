@@ -2,6 +2,12 @@ import 'dart:math';
 
 import 'package:flame/extensions.dart';
 
+/// ゲームコンフィグ
+abstract final class GameConfig {
+  /// 破壊毎ポイント
+  static const int pointPerBreak = 100;
+}
+
 /// パドルコンフィグ
 abstract final class PaddleConfig {
   /// サイズ
@@ -20,6 +26,10 @@ abstract final class BallConfig {
   static const double angle = -pi / 2;
   /// 配置オフセット
   static Vector2 get offset => PaddleConfig.offset - Vector2(0.0, 30.0);
-  // 速度
+  /// 速度
   static const double speed = 500.0;
+  /// 発射角度の最小の傾き
+  static const double minFireTilt = 0.17;
+  /// ガイドラインの長さ
+  static const double guideLineLength = 100.0;
 }

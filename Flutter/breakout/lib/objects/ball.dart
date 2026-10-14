@@ -65,7 +65,7 @@ class Ball extends CircleComponent
 
     // 自機との衝突
     if (other is Paddle) {
-      _bounceOfPaddle(other);
+      _bounceOffPaddle(other);
     }
     // ブロックとの衝突
     else if (other is Brick) {
@@ -76,7 +76,7 @@ class Ball extends CircleComponent
       other.removeFromParent();
       
       // ポイント加算
-      ref.read(scoreProvider.notifier).add(100);
+      ref.read(scoreProvider.notifier).add(GameConfig.pointPerBreak);
     }
   }
 
@@ -87,7 +87,7 @@ class Ball extends CircleComponent
   }
 
   /// 自機で反射
-  void _bounceOfPaddle(Paddle paddle) {
+  void _bounceOffPaddle(Paddle paddle) {
     // 上向きならスキップ
     if (_direction.y <= 0) return;
 
