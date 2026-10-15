@@ -26,7 +26,14 @@ class ResultView extends ConsumerWidget {
     final String? titleText = switch (state) {
       .clear => 'CLEAR',
       .gameOver => 'GAMEOVER',
-      _ => null
+      _ => null,
+    };
+    
+    // タイトル色
+    final Color titleColor = switch (state) {
+      .clear => Colors.yellowAccent,
+      .gameOver => Colors.redAccent,
+      _ => Colors.white,
     };
 
     // 表示するタイトルがなければ非表示
@@ -39,6 +46,7 @@ class ResultView extends ConsumerWidget {
         children: [
           StrokedText(
             titleText,
+            fillColor: titleColor,
             style: TextStyle(
               fontSize: 64,
               fontWeight: FontWeight.bold,
